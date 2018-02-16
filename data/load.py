@@ -4,6 +4,37 @@ import nltk
 from collections import Counter
 import itertools
 from torch.utils.data import Dataset, DataLoader
+import torch
+from collections import defaultdict
+
+
+class TedDataset(Dataset):
+
+    def __init__(self, ted_data, vocabulary=None, min_frequency=10):
+        if vocabulary is not None:
+            self.vocabulary = vocabulary
+        else:
+            self.vocabulary = get_vocabulary(
+                ted_data, min_frequency=min_frequency
+            )
+
+        self.indexer = get_word_indexer(self.vocabulary)
+        self.data = tokens2indices(ted_data, self.indexer)
+        self.padding_index = self.vocabulary.index('__pad__')
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, index):
+        return self.data[index]
+
+    def collate_fn(self, data):
+        max_length = max([len(sent) for sent in data])
+        batch = torch.ones(len(data), max_length) * self.padding_index
+        for i, sent in enumerate(data):
+            batch[i, :len(sent)] = torch.LongTensor(sent)
+
+        return batch
 
 
 def load_ted_data(xml_file):
@@ -24,7 +55,7 @@ def split_dataset(tokenized_sentences):
 def get_vocabulary(tokens, min_frequency=5):
     word_count = get_word_counts(tokens)
     vocabulary = [x[0] for x in word_count.items() if x[1] >= min_frequency]
-    vocabulary = ['__unk__'] + vocabulary
+    vocabulary = ['__unk__', '__pad__'] + vocabulary
 
     return vocabulary
 
@@ -38,7 +69,9 @@ def indices2tokens(indices, vocabulary):
 
 
 def get_word_indexer(vocabulary):
-    return {vocabulary[idx]: idx for idx in range(len(vocabulary))}
+    indexer = defaultdict(lambda : vocabulary.index('__unk__'))
+    indexer.update({vocabulary[idx]: idx for idx in range(len(vocabulary))})
+    return indexer
 
 
 def load_ted_xml(xml_file):
@@ -83,11 +116,26 @@ def recursive_map(l, f, dtype=list):
 if __name__ == '__main__':
     tokens_ted = load_ted_data('ted_en-20160408.xml')
     tokens_train, tokens_dev, tokens_test = split_dataset(tokens_ted)
-    vocab = get_vocabulary(tokens_train, min_frequency=10)
-    indexer = get_word_indexer(vocab)
+    train_dataset = TedDataset(tokens_train, min_frequency=10)
+    dev_dataset = TedDataset(tokens_dev, vocabulary=train_dataset.vocabulary)
+    test_dataset = TedDataset(tokens_test, vocabulary=train_dataset.vocabulary)
 
-    indices = tokens2indices(tokens_train[:2], indexer)
-    tokens = indices2tokens(indices, vocab)
+    train_dataloader = DataLoader(
+        train_dataset,
+        collate_fn=train_dataset.collate_fn,
+        batch_size=3,
+        num_workers=4
+    )
 
-    print(indices)
-    print(tokens)
+    for batch in train_dataloader:
+        print(batch)
+        break
+
+    # vocab = get_vocabulary(tokens_train, min_frequency=10)
+    # indexer = get_word_indexer(vocab)
+    #
+    # indices = tokens2indices(tokens_train[:2], indexer)
+    # tokens = indices2tokens(indices, vocab)
+    #
+    # print(indices)
+    # print(tokens)
