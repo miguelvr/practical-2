@@ -1,13 +1,12 @@
-import lxml.etree
+import os
 import re
 import nltk
-from collections import Counter
-import itertools
-from torch.utils.data import Dataset, DataLoader
 import torch
-from collections import defaultdict
-import os
 import pickle
+import itertools
+import lxml.etree
+from collections import defaultdict, Counter
+from torch.utils.data import Dataset, DataLoader
 
 
 class TedDataset(Dataset):
