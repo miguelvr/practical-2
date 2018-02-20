@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
@@ -57,7 +58,8 @@ class DocumentClassifier(ModelTemplate):
             input = input.cuda()
 
         out = self.forward(input)  # Forward Pass
-        scores = torch.exp(out).data.cpu().numpy()[:, 1].tolist()
+        scores = torch.exp(out).data.cpu().numpy()
+        scores = np.argmax(scores, axis=-1).tolist()
 
         return scores
 

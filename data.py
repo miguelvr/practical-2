@@ -69,10 +69,14 @@ def load_ted_data(xml_file):
         tokenized_text, labels = pickle.load(open(pkl_file, 'rb'))
     else:
         input_text, keywords = load_ted_xml(xml_file)
-        input_text = preprocess_ted_data(input_text)
+        input_text = preprocess_ted_data(input_text, keywords)
         tokenized_text = tokenize_sentences(input_text)
         labels = keywords2labels(keywords)
         pickle.dump((tokenized_text, labels), open(pkl_file, 'wb'))
+
+    assert len(tokenized_text) == len(labels), \
+        "incoherent data and labels length ({} != {})".\
+            format(len(tokenized_text), len(labels))
 
     return tokenized_text, labels
 
@@ -113,7 +117,10 @@ def load_ted_xml(xml_file):
     return docs_raw_text, keywords
 
 
-def preprocess_ted_data(documents_raw_text):
+def preprocess_ted_data(documents_raw_text, keywords_raw):
+
+    assert len(documents_raw_text) == len(keywords_raw), \
+        "documents and lables must have the same length"
 
     documents_ted = []
     for input_text in documents_raw_text:
@@ -134,9 +141,12 @@ def preprocess_ted_data(documents_raw_text):
 
         documents_ted.append('\n'.join(sentences_ted))
 
-    documents_ted = list(filter(lambda x: bool(x), documents_ted))
+    indices_to_remove = [i for i in range(len(documents_ted)) if not bool(documents_ted[i])]
 
-    return documents_ted
+    documents_ted = [doc for i, doc in enumerate(documents_ted) if i not in indices_to_remove]
+    keywords = [kw for i, kw in enumerate(keywords_raw) if i not in indices_to_remove]
+
+    return documents_ted, keywords
 
 
 def keywords2labels(strings_keywords):
