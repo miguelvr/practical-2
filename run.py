@@ -11,10 +11,10 @@ def run():
     # Config
     config = {
         'model_folder': 'tmp',
-        'embedding_size': 64,
+        'embedding_size': 50,
         'hidden_size': 20,
-        'batch_size': 25,
-        'epochs': 10
+        'batch_size': 50,
+        'epochs': 100
     }
 
     # Data
@@ -22,9 +22,19 @@ def run():
     tokens_train, tokens_dev, tokens_test = split_dataset(tokens_ted)
     labels_train, labels_dev, labels_test = split_dataset(labels)
 
-    train_dataset = TedDataset(tokens_train, labels_train, min_frequency=10)
-    dev_dataset = TedDataset(tokens_dev, labels_dev, vocabulary=train_dataset.vocabulary)
-    test_dataset = TedDataset(tokens_test, labels_test, vocabulary=train_dataset.vocabulary)
+    train_dataset = TedDataset(tokens_train,
+                               labels_train,
+                               min_frequency=10)
+
+    dev_dataset = TedDataset(tokens_dev,
+                             labels_dev,
+                             vocabulary=train_dataset.vocabulary,
+                             raw_output=True)
+
+    test_dataset = TedDataset(tokens_test,
+                              labels_test,
+                              vocabulary=train_dataset.vocabulary,
+                              raw_output=True)
 
     train_dataloader = DataLoader(
         train_dataset,

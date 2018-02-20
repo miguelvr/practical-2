@@ -11,9 +11,10 @@ from torch.utils.data import Dataset, DataLoader
 
 class TedDataset(Dataset):
 
-    def __init__(self, ted_data, labels_ted=None, vocabulary=None, min_frequency=10):
+    def __init__(self, ted_data, labels_ted=None, vocabulary=None, min_frequency=10, raw_output=False):
 
         self.has_output = False
+        self.raw_output = raw_output
 
         if vocabulary is not None:
             self.vocabulary = vocabulary
@@ -56,7 +57,10 @@ class TedDataset(Dataset):
 
         if self.has_output:
             output_data = [x['output'] for x in data]
-            batch['output'] = torch.LongTensor(output_data)
+            if self.raw_output:
+                batch['output'] = output_data
+            else:
+                batch['output'] = torch.LongTensor(output_data)
 
         return batch
 
@@ -69,7 +73,7 @@ def load_ted_data(xml_file):
         tokenized_text, labels = pickle.load(open(pkl_file, 'rb'))
     else:
         input_text, keywords = load_ted_xml(xml_file)
-        input_text = preprocess_ted_data(input_text, keywords)
+        input_text, keywords = preprocess_ted_data(input_text, keywords)
         tokenized_text = tokenize_sentences(input_text)
         labels = keywords2labels(keywords)
         pickle.dump((tokenized_text, labels), open(pkl_file, 'wb'))
