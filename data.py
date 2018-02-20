@@ -48,7 +48,7 @@ class TedDataset(Dataset):
 
         input_data = [x['input'] for x in data]
         max_length = max([len(sent) for sent in input_data])
-        input_batch = torch.ones(len(input_data), max_length) * self.padding_index
+        input_batch = (torch.ones(len(input_data), max_length) * self.padding_index).long()
         for i, sent in enumerate(input_data):
             input_batch[i, :len(sent)] = torch.LongTensor(sent)
 

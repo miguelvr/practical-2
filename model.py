@@ -72,13 +72,12 @@ class MLP(DocumentClassifier):
         self.emb = None
         self.linear = None
         self.linear_out = None
-        self.activation = None
+        self.activation = F.tanh
 
     def build_model(self):
         self.emb = Embedding(len(self.vocabulary), self.embedding_size)
-        self.linear = nn.Linear(self.config, self.hidden_size)
+        self.linear = nn.Linear(self.embedding_size, self.hidden_size)
         self.linear_out = nn.Linear(self.hidden_size, 1)
-        self.activation = F.tanh
 
     def forward(self, x):
         h = self.emb(x)
@@ -87,3 +86,37 @@ class MLP(DocumentClassifier):
         h = self.linear_out(h)
         p = F.log_softmax(h, dim=-1)
         return p
+
+
+if __name__ == '__main__':
+
+    from data import load_ted_data, split_dataset, TedDataset
+    from torch.utils.data import DataLoader
+
+    tokens_ted, labels = load_ted_data('ted_en-20160408.xml')
+    tokens_train, tokens_dev, tokens_test = split_dataset(tokens_ted)
+    labels_train, labels_dev, labels_test = split_dataset(labels)
+    train_dataset = TedDataset(tokens_train, labels_train, min_frequency=10)
+
+    train_dataloader = DataLoader(
+        train_dataset,
+        collate_fn=train_dataset.collate_fn,
+        batch_size=3,
+        num_workers=4
+    )
+
+    config = {
+        'model_folder': 'tmp',
+        'embedding_size': 64,
+        'hidden_size': 20,
+    }
+
+    mlp = MLP(config)
+    mlp.initialize_features(data=train_dataset)
+    mlp.build_model()
+
+    for batch in train_dataloader:
+        y_pred = mlp(Variable(batch['input']))
+        break
+
+    print(y_pred)
