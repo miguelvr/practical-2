@@ -134,6 +134,8 @@ def preprocess_ted_data(documents_raw_text):
 
         documents_ted.append('\n'.join(sentences_ted))
 
+    documents_ted = list(filter(lambda x: bool(x), documents_ted))
+
     return documents_ted
 
 
@@ -198,13 +200,14 @@ if __name__ == '__main__':
     dev_dataset = TedDataset(tokens_dev, labels_dev, vocabulary=train_dataset.vocabulary)
     test_dataset = TedDataset(tokens_test, labels_test, vocabulary=train_dataset.vocabulary)
 
+    print(len(train_dataset))
+
     train_dataloader = DataLoader(
         train_dataset,
         collate_fn=train_dataset.collate_fn,
-        batch_size=3,
+        batch_size=25,
         num_workers=4
     )
 
     for batch in train_dataloader:
-        print(batch)
-        break
+        print(batch['input'].shape)

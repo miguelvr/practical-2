@@ -77,7 +77,15 @@ class MLP(DocumentClassifier):
     def build_model(self):
         self.emb = Embedding(len(self.vocabulary), self.embedding_size)
         self.linear = nn.Linear(self.embedding_size, self.hidden_size)
-        self.linear_out = nn.Linear(self.hidden_size, 1)
+        self.linear_out = nn.Linear(self.hidden_size, 8)
+
+        self.loss_fn = nn.NLLLoss()
+        self.optimizer = torch.optim.Adam(self.parameters())
+
+        # Set model to a specific gpu device
+        if self.gpu_device is not None:
+            torch.cuda.set_device(self.gpu_device)
+            self.cuda()
 
     def forward(self, x):
         h = self.emb(x)
