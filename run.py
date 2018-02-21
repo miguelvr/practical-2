@@ -12,9 +12,9 @@ def run():
     config = {
         'model_folder': 'tmp',
         'embedding_size': 50,
-        'hidden_size': 20,
+        'hidden_size': 25,
         'batch_size': 50,
-        'epochs': 100
+        'epochs': 150
     }
 
     # Data

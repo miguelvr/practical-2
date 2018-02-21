@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import torch.nn as nn
+import torch.nn.init
 import torch.nn.functional as F
 from torch.autograd import Variable
 from torch.utils.data import Dataset
@@ -80,6 +81,10 @@ class MLP(DocumentClassifier):
         self.emb = Embedding(len(self.vocabulary), self.embedding_size)
         self.linear = nn.Linear(self.embedding_size, self.hidden_size)
         self.linear_out = nn.Linear(self.hidden_size, 8)
+
+        # Initializations
+        torch.nn.init.xavier_uniform(self.linear.weight, gain=torch.nn.init.calculate_gain('tanh'))
+        torch.nn.init.xavier_uniform(self.linear_out.weight)
 
         self.loss_fn = nn.NLLLoss()
         self.optimizer = torch.optim.Adam(self.parameters())
