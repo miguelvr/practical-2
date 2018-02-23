@@ -14,7 +14,7 @@ def run():
         'embedding_size': 50,
         'hidden_size': 25,
         'batch_size': 50,
-        'epochs': 150
+        'epochs': 100
     }
 
     # Data
@@ -63,11 +63,23 @@ def run():
     model.build_model()
 
     # Logger
-    logger = BasicLogger(metric=accuracy_score)
+    logger = BasicLogger(metric=accuracy_score,
+                         score_optimization='max')
 
     # Trainer
     trainer = Trainer(model=model, logger=logger)
     trainer.fit(train_dataloader, dev_dataloader, epochs=config['epochs'])
+
+    model.load(
+        '{}/{}.torch'.format(model.config['model_folder'],
+                             type(model).__name__.lower())
+    )
+
+    target = []
+    for batch in test_dataloader:
+        target.extend(batch['output'].tolist())
+    predictions = trainer.test(test_dataloader)
+    print("Test Accuracy:", accuracy_score(target, predictions))
 
 
 if __name__ == '__main__':
